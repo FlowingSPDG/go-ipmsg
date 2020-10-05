@@ -8,15 +8,17 @@ import (
 	"time"
 )
 
+// IPMSG IPMessager main struct.
 type IPMSG struct {
 	ClientData ClientData
 	Conn       *net.UDPConn
-	Conf       *IPMSGConfig
+	Conf       *Config
 	Handlers   []*EventHandler
 	PacketNum  int
 }
 
-type IPMSGConfig struct {
+// Config IPMessager configration struct.
+type Config struct {
 	NickName  string
 	GroupName string
 	UserName  string
@@ -26,18 +28,21 @@ type IPMSGConfig struct {
 }
 
 const (
+	// DefaultPort default UDP Port number(2425).
 	DefaultPort int = 2425
-	Buflen      int = 65535
+	// Buflen net.Conn data receive buffer size(65535).
+	Buflen int = 65535
 )
 
-func NewIPMSGConf() *IPMSGConfig {
-	conf := &IPMSGConfig{
+// NewIPMSGConf Generate New pointer of Config struct.
+func NewIPMSGConf() *Config {
+	return &Config{
 		Port: DefaultPort,
 	}
-	return conf
 }
 
-func NewIPMSG(conf *IPMSGConfig) (*IPMSG, error) {
+// NewIPMSG Generate new instance pointer of IPMSG. Return error if it failed to solve/listen UDP Address.
+func NewIPMSG(conf *Config) (*IPMSG, error) {
 	ipmsg := &IPMSG{
 		PacketNum: 0,
 	}
@@ -57,16 +62,17 @@ func NewIPMSG(conf *IPMSGConfig) (*IPMSG, error) {
 	return ipmsg, err
 }
 
+// Close Close UDP connection
 func (ipmsg *IPMSG) Close() error {
 	conn := ipmsg.Conn
 	if conn == nil {
 		err := errors.New("Conn is not defined")
 		return err
 	}
-	err := conn.Close()
-	return err
+	return conn.Close()
 }
 
+// BuildData Generates new pointer of ClientData struct.
 func (ipmsg *IPMSG) BuildData(addr *net.UDPAddr, msg string, cmd Command) *ClientData {
 	conf := ipmsg.Conf
 	clientdata := NewClientData("", addr)
@@ -79,6 +85,7 @@ func (ipmsg *IPMSG) BuildData(addr *net.UDPAddr, msg string, cmd Command) *Clien
 	return clientdata
 }
 
+// SendMSG Send UDP message/cmd to specified addr.
 func (ipmsg *IPMSG) SendMSG(addr *net.UDPAddr, msg string, cmd Command) error {
 	clientdata := ipmsg.BuildData(addr, msg, cmd)
 	conn := ipmsg.Conn
@@ -89,6 +96,7 @@ func (ipmsg *IPMSG) SendMSG(addr *net.UDPAddr, msg string, cmd Command) error {
 	return nil
 }
 
+// RecvMSG Receive message from UDP.
 func (ipmsg *IPMSG) RecvMSG() (*ClientData, error) {
 	var buf [Buflen]byte
 	conn := ipmsg.Conn
@@ -109,7 +117,7 @@ func (ipmsg *IPMSG) RecvMSG() (*ClientData, error) {
 	return clientdata, nil
 }
 
-// convert net.Addr to net.UDPAddr
+// UDPAddr convert net.Addr to net.UDPAddr
 func (ipmsg *IPMSG) UDPAddr() (*net.UDPAddr, error) {
 	conn := ipmsg.Conn
 	if conn == nil {
@@ -124,18 +132,19 @@ func (ipmsg *IPMSG) UDPAddr() (*net.UDPAddr, error) {
 	return udpAddr, err
 }
 
+// AddEventHandler Add new event handler
 func (ipmsg *IPMSG) AddEventHandler(ev *EventHandler) {
-	sl := ipmsg.Handlers
-	sl = append(sl, ev)
-	ipmsg.Handlers = sl
+	ipmsg.Handlers = append(ipmsg.Handlers, ev)
 }
 
+// GetNewPacketNum Get new packet number with Unix Time.
 func (ipmsg *IPMSG) GetNewPacketNum() int {
 	ipmsg.PacketNum++
 	return int(time.Now().Unix()) + ipmsg.PacketNum
 }
 
+// Myinfo Get Nickname[x00]groupname[x00] string.
 func (ipmsg *IPMSG) Myinfo() string {
 	conf := ipmsg.Conf
-	return fmt.Sprintf("%v\x00%v\x00", conf.NickName, conf.GroupName)
+	return fmt.Sprintf("%s\x00%s\x00", conf.NickName, conf.GroupName)
 }

@@ -2,6 +2,7 @@ package ipmsg
 
 import "fmt"
 
+// Command definition
 type Command int
 
 const (
@@ -30,7 +31,7 @@ const (
 	GETDIRFILE      Command = 0x00000062
 	GETPUBKEY       Command = 0x00000072
 	ANSPUBKEY       Command = 0x00000073
-	// MODE
+	// MODE Command mode.
 	MODE Command = 0x000000ff
 	// OPTION
 	//ABSENCE    Command = 0x00000100
@@ -52,6 +53,7 @@ const (
 	ENCRYPT    Command = 0x00400000
 )
 
+// Mode Get msg & MODE Command
 func (msg Command) Mode() Command {
 	if 0 == msg {
 		return 0
@@ -59,16 +61,19 @@ func (msg Command) Mode() Command {
 	return msg & MODE
 }
 
+// ModeName get msg MODE as string
 func (msg Command) ModeName() string {
 	mode := msg.Mode()
 	str := fmt.Sprint(mode)
 	return str
 }
 
+// Get Get specified flg.
 func (msg Command) Get(flg Command) bool {
 	return msg&flg != 0
 }
 
+// SetOpt set option
 func (msg *Command) SetOpt(flg Command) {
 	*msg |= flg
 }

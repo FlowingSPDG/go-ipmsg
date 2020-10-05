@@ -2,25 +2,30 @@ package ipmsg
 
 import "fmt"
 
+// EvFunc is Event handler type definition.
 type EvFunc func(cd *ClientData, ipmsg *IPMSG) error
+
+// EventHandler is handler struct
 type EventHandler struct {
 	String   string
 	Handlers map[Command]EvFunc
 	Debug    bool
 }
 
+// NewEventHandler generates new pointer of EventHandler{}
 func NewEventHandler() *EventHandler {
-	ev := &EventHandler{
+	return &EventHandler{
 		Handlers: make(map[Command]EvFunc),
 	}
-	return ev
 }
 
+// Regist Regist new EventFunc handler with specified Command(cmd).
 func (ev *EventHandler) Regist(cmd Command, evfunc EvFunc) {
 	handlers := ev.Handlers
 	handlers[cmd] = evfunc
 }
 
+// Run Run specified event handler
 func (ev *EventHandler) Run(cd *ClientData, ipmsg *IPMSG) error {
 	if ev.Debug {
 		ev.RunDebug(cd)
@@ -30,11 +35,11 @@ func (ev *EventHandler) Run(cd *ClientData, ipmsg *IPMSG) error {
 	if evfunc == nil {
 		// just do nothing when handler is undefined
 		return nil
-	} else {
-		return (evfunc(cd, ipmsg))
 	}
+	return (evfunc(cd, ipmsg))
 }
 
+// RunDebug Run event handler with Debug output.
 func (ev *EventHandler) RunDebug(cd *ClientData) {
 	cmdstr := cd.Command.Mode().String()
 	fmt.Println("EventHandler.RunDebug cmdstr=", cmdstr)

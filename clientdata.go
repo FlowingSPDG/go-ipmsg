@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// ClientData contains IPMSG protocol packet.
 type ClientData struct {
 	Version   int
 	PacketNum int
@@ -25,6 +26,7 @@ type ClientData struct {
 	Attach    bool
 }
 
+// NewClientData Generates new ClientData Pointer with specified msg/addr.
 func NewClientData(msg string, addr *net.UDPAddr) *ClientData {
 	clientdata := &ClientData{
 		Addr: addr,
@@ -47,6 +49,7 @@ func (c *ClientData) String() string {
 	return str
 }
 
+// Parse parse "msg" string and apply to *ClientData itself.
 func (c *ClientData) Parse(msg string) {
 	//pp.Println("msg=", msg)
 	s := strings.SplitN(msg, ":", 6)
@@ -63,6 +66,7 @@ func (c *ClientData) Parse(msg string) {
 	c.UpdateNick()
 }
 
+// UpdateNick Update client nickname/group.
 func (c *ClientData) UpdateNick() {
 	msg := c.Command
 	mode := msg.Mode()
@@ -78,6 +82,7 @@ func (c *ClientData) UpdateNick() {
 	}
 }
 
+// NickName get nickname@groupname string. e.g. "noname@nogroup"
 func (c ClientData) NickName() string {
 	nick := "noname"
 	if c.Nick != "" {
@@ -94,6 +99,7 @@ func (c ClientData) NickName() string {
 	return fmt.Sprintf("%s@%s", nick, group)
 }
 
+// Key Generate user@address style string.
 func (c ClientData) Key() string {
 	return fmt.Sprintf("%s@%s", c.User, c.Addr.String())
 }

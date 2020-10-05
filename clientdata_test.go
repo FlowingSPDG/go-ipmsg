@@ -23,7 +23,6 @@ func TestParse(t *testing.T) {
 		t.Errorf("client.Group should be 'group' but '%v'", client.Group)
 	}
 	if client.NickName() != "nick@group" {
-		t.Errorf("client.NickName() should be 'nick@group' but '%v'",
-			client.NickName)
+		t.Errorf("client.NickName() should be 'nick@group' but '%v'", client.NickName())
 	}
 }
