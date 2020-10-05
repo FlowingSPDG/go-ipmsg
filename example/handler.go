@@ -3,26 +3,25 @@ package main
 import (
 	"strconv"
 
-	goipmsg "github.com/masanorih/go-ipmsg"
+	goipmsg "github.com/FlowingSPDG/go-ipmsg"
 )
 
-var Users = make(map[string]*goipmsg.ClientData)
-var Messages = []*goipmsg.ClientData{}
+var users = make(map[string]*goipmsg.ClientData)
+var messages = []*goipmsg.ClientData{}
 
 func RECEIVE_BR_ENTRY(cd *goipmsg.ClientData, ipmsg *goipmsg.IPMSG) error {
-	Users[cd.Key()] = cd
+	users[cd.Key()] = cd
 	ipmsg.SendMSG(cd.Addr, ipmsg.Myinfo(), goipmsg.ANSENTRY)
 	return nil
 }
 
 func RECEIVE_ANSENTRY(cd *goipmsg.ClientData, ipmsg *goipmsg.IPMSG) error {
-	Users[cd.Key()] = cd
+	users[cd.Key()] = cd
 	return nil
 }
 
 func RECEIVE_SENDMSG(cd *goipmsg.ClientData, ipmsg *goipmsg.IPMSG) error {
-	sl := append(Messages, cd)
-	Messages = sl
+	messages = append(messages, cd)
 
 	cmd := cd.Command
 	if cmd.Get(goipmsg.SENDCHECK) {

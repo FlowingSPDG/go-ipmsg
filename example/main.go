@@ -9,17 +9,19 @@ import (
 
 	"github.com/Songmu/prompter"
 	"github.com/k0kubun/pp"
-	goipmsg "github.com/masanorih/go-ipmsg"
+
+	goipmsg "github.com/FlowingSPDG/go-ipmsg"
 )
 
 var commands = []string{"help", "quit", "join", "list", "send", "read"}
 
 func main() {
 	ipmsg := setup()
+	defer ipmsg.Close()
 
 	input := make(chan string)
 	next := make(chan string)
-	quit := make(chan string)
+	quit := make(chan struct{})
 	recv := make(chan string)
 	// main loop or receive event from channel
 	go func() {
@@ -93,8 +95,8 @@ func setup() *goipmsg.IPMSG {
 	return ipmsg
 }
 
-// Switchinput dispatches actions via input
-func SwitchInput(ipmsg *goipmsg.IPMSG, input string, quit chan string) {
+// SwitchInput dispatches actions via input
+func SwitchInput(ipmsg *goipmsg.IPMSG, input string, quit chan struct{}) {
 	switch input {
 	case "help":
 		fmt.Println("usage:")
@@ -107,7 +109,7 @@ func SwitchInput(ipmsg *goipmsg.IPMSG, input string, quit chan string) {
 	case "quit":
 		fmt.Println("quitting...")
 		ipmsg.Close()
-		quit <- "quitting"
+		quit <- struct{}{}
 	case "join":
 		Join(ipmsg)
 	case "list":
@@ -119,17 +121,18 @@ func SwitchInput(ipmsg *goipmsg.IPMSG, input string, quit chan string) {
 	}
 }
 
+// Read ipmsg=?
 func Read(ipmsg *goipmsg.IPMSG) {
-	if len(Messages) == 0 {
+	if len(messages) == 0 {
 		fmt.Println("There is no message to read.")
 	} else {
-		for _, v := range Messages {
-			fmt.Printf("From: %v\n", v.Key())
+		for _, v := range messages {
+			fmt.Printf("From: %s\n", v.Key())
 			fmt.Printf("Date: %v\n", v.Time)
-			fmt.Printf("Message: %v\n\n", v.Option)
+			fmt.Printf("Message: %s\n\n", v.Option)
 		}
 		// clear all datas
-		Messages = []*goipmsg.ClientData{}
+		messages = []*goipmsg.ClientData{}
 	}
 }
 
@@ -138,7 +141,7 @@ func Send(ipmsg *goipmsg.IPMSG) {
 	userIdx := []string{}
 	i := 0
 	m := make(map[int]string)
-	for k, _ := range Users {
+	for k := range users {
 		i++
 		fmt.Printf("%d %v\n", i, k)
 		userIdx = append(userIdx, strconv.Itoa(i))
@@ -154,9 +157,9 @@ func Send(ipmsg *goipmsg.IPMSG) {
 	i, _ = strconv.Atoi(chosen)
 	key := m[i]
 
-	promptMessage := fmt.Sprintf("Enter message(to %v)", key)
+	promptMessage := fmt.Sprintf("Enter message(to %s)", key)
 	message := prompter.Prompt(promptMessage, "")
-	cd := Users[key]
+	cd := users[key]
 	addr := cd.Addr
 
 	cmd := goipmsg.SENDMSG
@@ -170,12 +173,12 @@ func Send(ipmsg *goipmsg.IPMSG) {
 
 // List print out known users
 func List(ipmsg *goipmsg.IPMSG) {
-	if len(Users) == 0 {
+	if len(users) == 0 {
 		fmt.Println("There is no users.")
 	} else {
 		fmt.Println("known users below.")
 		i := 0
-		for k, _ := range Users {
+		for k := range users {
 			i++
 			fmt.Printf("\t%d %v\n", i, k)
 		}
