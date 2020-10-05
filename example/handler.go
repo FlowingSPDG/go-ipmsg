@@ -6,8 +6,10 @@ import (
 	goipmsg "github.com/FlowingSPDG/go-ipmsg"
 )
 
-var users = make(map[string]*goipmsg.ClientData)
-var messages = []*goipmsg.ClientData{}
+var (
+	users    = make(map[string]*goipmsg.ClientData)
+	messages = []*goipmsg.ClientData{}
+)
 
 func RECEIVE_BR_ENTRY(cd *goipmsg.ClientData, ipmsg *goipmsg.IPMSG) error {
 	users[cd.Key()] = cd

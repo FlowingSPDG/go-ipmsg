@@ -13,7 +13,9 @@ import (
 	goipmsg "github.com/FlowingSPDG/go-ipmsg"
 )
 
-var commands = []string{"help", "quit", "join", "list", "send", "read"}
+var (
+	commands = []string{"help", "quit", "join", "list", "send", "read"}
+)
 
 func main() {
 	ipmsg := setup()
