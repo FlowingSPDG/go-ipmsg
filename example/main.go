@@ -110,6 +110,7 @@ func SwitchInput(ipmsg *goipmsg.IPMSG, input string, quit chan struct{}) {
 		fmt.Println("\tread: read received message.")
 	case "quit":
 		fmt.Println("quitting...")
+		Quit(ipmsg)
 		ipmsg.Close()
 		quit <- struct{}{}
 	case "join":
@@ -197,6 +198,18 @@ func Join(ipmsg *goipmsg.IPMSG) {
 		panic(err)
 	}
 	fmt.Println("sent BR_ENTRY")
+}
+
+// Quit sends BR_EXIT packet to the broadcast address
+func Quit(ipmsg *goipmsg.IPMSG) {
+	addr := brAddr(ipmsg)
+	cmd := goipmsg.BR_EXIT
+	cmd.SetOpt(goipmsg.BROADCAST)
+	err := ipmsg.SendMSG(addr, ipmsg.Myinfo(), cmd)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("sent BR_EXIT")
 }
 
 // brAddr retrieves broadcast address
