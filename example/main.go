@@ -24,17 +24,18 @@ func main() {
 	input := make(chan string)
 	next := make(chan string)
 	quit := make(chan struct{})
-	recv := make(chan string)
+	recv := make(chan goipmsg.ClientData)
 	// main loop or receive event from channel
 	go func() {
 		for {
 			var str string
+			var cd goipmsg.ClientData
 			select {
 			case str = <-input:
 				SwitchInput(ipmsg, str, quit)
 				next <- ""
-			case str = <-recv:
-				pp.Println("recv=", str)
+			case cd = <-recv:
+				pp.Println("recv=", cd)
 			}
 		}
 	}()
@@ -58,7 +59,7 @@ func main() {
 				panic(err)
 			}
 			//pp.Println("recv=", cd.String())
-			recv <- cd.Option
+			recv <- *cd
 		}
 	}()
 
@@ -110,6 +111,7 @@ func SwitchInput(ipmsg *goipmsg.IPMSG, input string, quit chan struct{}) {
 		fmt.Println("\tread: read received message.")
 	case "quit":
 		fmt.Println("quitting...")
+		Quit(ipmsg)
 		ipmsg.Close()
 		quit <- struct{}{}
 	case "join":
@@ -197,6 +199,18 @@ func Join(ipmsg *goipmsg.IPMSG) {
 		panic(err)
 	}
 	fmt.Println("sent BR_ENTRY")
+}
+
+// Quit sends BR_EXIT packet to the broadcast address
+func Quit(ipmsg *goipmsg.IPMSG) {
+	addr := brAddr(ipmsg)
+	cmd := goipmsg.BR_EXIT
+	cmd.SetOpt(goipmsg.BROADCAST)
+	err := ipmsg.SendMSG(addr, ipmsg.Myinfo(), cmd)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("sent BR_EXIT")
 }
 
 // brAddr retrieves broadcast address
